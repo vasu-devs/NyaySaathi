@@ -28,22 +28,14 @@ const Nav = () => {
           </span>
         </div>
 
-        {/* Center - Emergency Help (always visible, consistent aspect ratio) */}
-        <div className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 flex justify-center">
-          <button
-            className="bg-[#2C6BA1] hover:bg-[#1F5A85] text-white font-semibold 
-                       rounded-md transition-colors
-                        sm:min-w-[180px] sm:
-                       w-[150px]
-                       h-[42px] sm:h-[46px] 
-                      flex items-center justify-center
-                       text-sm sm:text-base cursor-pointer"
-          >
+        {/* Center - Emergency Help on mobile only */}
+        <div className="absolute left-1/2 -translate-x-1/2 md:hidden flex justify-center">
+          <button className="bg-[#2C6BA1] hover:bg-[#1F5A85] text-white font-semibold rounded-md transition-colors w-[150px] h-[42px] sm:w-[180px] sm:h-[46px] flex items-center justify-center text-sm sm:text-base cursor-pointer">
             Get Emergency Help
           </button>
         </div>
 
-        {/* Desktop Links and Controls */}
+        {/* Desktop Links (left/center) */}
         <div className="hidden md:flex items-center gap-8">
           {navItems.map((item) => (
             <a
@@ -54,13 +46,22 @@ const Nav = () => {
               {item.label}
             </a>
           ))}
+        </div>
 
+        {/* Desktop Right Controls: small language toggle + emergency button */}
+        <div className="hidden md:flex items-center gap-4">
           <button
             onClick={() => setLanguage(language === "En" ? "Hi" : "En")}
-            className="px-3 py-1.5 rounded-md bg-[#EAF1F8] text-[#0B304A] font-semibold  cursor-pointer"
+            className="px-2 py-1 rounded-md bg-[#EAF1F8] text-[#0B304A] font-semibold text-sm"
           >
             {language}
           </button>
+
+          <div className="hidden md:block">
+            <button className="bg-[#2C6BA1] hover:bg-[#1F5A85] text-white font-semibold rounded-md transition-colors px-4 py-2 text-sm">
+              Get Emergency Help
+            </button>
+          </div>
         </div>
 
         {/* Right - Hamburger (only mobile) */}
@@ -74,7 +75,7 @@ const Nav = () => {
 
       {/* Mobile Dropdown Menu */}
       {menuOpen && (
-        <div className="flex flex-col items-center gap-4 py-4 border-t border-gray-200 md:hidden mt-14">
+        <div className="absolute left-0 right-0 top-full flex flex-col items-center gap-4 py-4 border-t border-gray-200 md:hidden bg-white shadow-md z-40">
           {navItems.map((item) => (
             <a
               key={item.label}
