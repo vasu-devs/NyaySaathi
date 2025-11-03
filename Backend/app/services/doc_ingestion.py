@@ -2,11 +2,17 @@ from __future__ import annotations
 import os
 import uuid
 import hashlib
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import fitz  # PyMuPDF
 from docx2python import docx2python
 from app.core.config import settings
-from app.utils.text_splitter import split_text
+from app.utils.text_splitter import (
+    split_text,
+    preprocess_legal_text,
+    parse_legal_units,
+    chunk_units,
+    derive_procedural_tags,
+)
 from app.services.embedding import get_embedder
 from app.services.vector_store import QdrantStore
 
@@ -78,9 +84,29 @@ def ingest_file(
         progress_cb({"stage": "extract"})
     text = extract_text(saved_path)
 
-    # Split
-    chunks = split_text(text)
-    total_chunks = len(chunks)
+    # Prefer legal-aware splitting with enriched metadata
+    chunks_with_meta: List[Tuple[str, Dict]] = []
+    try:
+        units = parse_legal_units(text)
+        # Clean each unit body conservatively to remove noise while keeping headings
+        for u in units:
+            u["text"] = preprocess_legal_text(u.get("text", ""))
+        if units and any(u.get("unit_type") in ("Article", "Section") for u in units):
+            chunks_with_meta = chunk_units(units, target_chars=1600, overlap=200)
+    except Exception:
+        # Fall back to simple splitter below
+        chunks_with_meta = []
+
+    if chunks_with_meta:
+        chunks = [c for c, _ in chunks_with_meta]
+    else:
+        # Fallback: preprocess full text then simple split
+        clean_full = preprocess_legal_text(text)
+        chunks = split_text(clean_full)
+        # create placeholder meta
+        chunks_with_meta = [(c, {"unit_type": "Prose"}) for c in chunks]
+
+    total_chunks = len(chunks_with_meta)
     if progress_cb:
         progress_cb({"stage": "split", "total_chunks": total_chunks, "ingested": 0, "percent": 0})
 
@@ -99,7 +125,8 @@ def ingest_file(
     title_value = title or os.path.basename(saved_path)
     for start in range(0, total_chunks, batch_size):
         end = min(start + batch_size, total_chunks)
-        batch_chunks = chunks[start:end]
+        batch_chunks_meta = chunks_with_meta[start:end]
+        batch_chunks = [c for c, _ in batch_chunks_meta]
         # Embed this batch
         vectors = embedder.encode(
             batch_chunks,
@@ -112,21 +139,38 @@ def ingest_file(
         # Build ids/payloads for this batch
         ids: List[str] = []
         payloads: List[Dict] = []
-        for i_rel, (chunk, vec) in enumerate(zip(batch_chunks, vectors)):
+        for i_rel, ((chunk, meta), vec) in enumerate(zip(batch_chunks_meta, vectors)):
             idx = start + i_rel
             # Qdrant point id must be an unsigned integer or a UUID. Use UUID per chunk.
             point_id = str(uuid.uuid4())
             ids.append(point_id)
-            payloads.append(
-                {
-                    "doc_id": doc_id,
-                    "chunk_id": idx,
-                    "text": chunk,
-                    "title": title_value,
-                    "source_path": saved_path,
-                    "checksum": checksum,
-                }
-            )
+            extra: Dict = {
+                "unit_type": meta.get("unit_type"),
+                "heading": meta.get("heading"),
+                "part": meta.get("part"),
+                "chapter": meta.get("chapter"),
+            }
+            ident = meta.get("identifier")
+            if ident:
+                if meta.get("unit_type") == "Article":
+                    extra["article"] = ident
+                if meta.get("unit_type") == "Section":
+                    extra["section"] = ident
+
+            # Derive procedural/reasoning tags for retrieval
+            tags = derive_procedural_tags(chunk, meta.get("unit_type"), meta.get("identifier"), title_value)
+
+            payload = {
+                "doc_id": doc_id,
+                "chunk_id": idx,
+                "text": chunk,
+                "title": title_value,
+                "source_path": saved_path,
+                "checksum": checksum,
+                "tags": tags,
+            }
+            payload.update(extra)
+            payloads.append(payload)
 
         # Upsert this batch
         store.upsert_points(ids, vectors, payloads)

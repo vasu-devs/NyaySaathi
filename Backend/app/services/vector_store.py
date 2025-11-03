@@ -55,3 +55,14 @@ class QdrantStore:
                 }
             )
         return out
+
+    def delete_by_doc_id(self, doc_id: str) -> int:
+        """Delete all points in this collection that match the given doc_id. Returns number of points scheduled for deletion (best-effort)."""
+        cond = qmodels.Filter(must=[qmodels.FieldCondition(key="doc_id", match=qmodels.MatchValue(value=doc_id))])
+        res = self.client.delete(
+            collection_name=self.collection,
+            points_selector=qmodels.FilterSelector(filter=cond),
+            wait=True,
+        )
+        # Qdrant returns operation result; count may not be provided, so return 0/1 semantics
+        return getattr(res, "status", None) is not None and 1 or 0

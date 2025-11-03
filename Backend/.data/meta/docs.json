@@ -1,11 +1,20 @@
 {
   "documents": [
     {
-      "doc_id": "dfee9bd8-c939-434e-ab25-219e82fc5472",
+      "doc_id": "89a988b9-cea3-4c10-ad3a-ec3e98627621",
       "title": "constitution_of_india.pdf",
-      "chunks": 690,
+      "chunks": 499,
       "checksum": "043686f3266b9a88fd7949f87120520e544aebd20189ee4fbfb246e871333540",
-      "path": ".data/uploads\\constitution_of_india_13.pdf"
+      "path": ".data/uploads\\constitution_of_india_15.pdf",
+      "approved": true
+    },
+    {
+      "doc_id": "d5dd159e-93e5-41eb-82a6-dbd0731249ff",
+      "title": "it_act_2000_updated.pdf",
+      "chunks": 138,
+      "checksum": "e71725fa32e892f887308816046c42275fc855b5cbb4ee1063cdbd518f165140",
+      "path": ".data/uploads\\it_act_2000_updated_2.pdf",
+      "approved": true
     }
   ]
 }

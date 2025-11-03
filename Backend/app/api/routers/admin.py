@@ -2,7 +2,7 @@ from __future__ import annotations
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from typing import List, Dict
 from app.services.doc_ingestion import save_upload, ingest_file
-from app.services.metadata_store import add_document, list_documents as meta_list, delete_document as meta_delete
+from app.services.metadata_store import add_document, list_documents as meta_list, delete_document as meta_delete, set_document_approved
 from app.api.deps import require_admin
 from app.services.vector_store import QdrantStore
 from app.services.embedding import get_embedder
@@ -22,6 +22,7 @@ async def upload_document(
     saved = save_upload(content, file.filename)
     try:
         info = ingest_file(saved, title=title)
+        info["approved"] = False
         add_document(info)
         return {"ok": True, "document": info}
     except Exception as e:
@@ -38,6 +39,7 @@ async def upload_document(
                     vectors_config=qmodels.VectorParams(size=dim, distance=qmodels.Distance.COSINE),
                 )
                 info = ingest_file(saved, title=title)  # retry
+                info["approved"] = False
                 add_document(info)
                 return {"ok": True, "document": info, "recovered": True}
         except Exception:
@@ -51,8 +53,32 @@ async def list_documents(_: Dict = Depends(require_admin)):
     return {"items": meta_list()}
 
 
+@router.patch("/documents/{doc_id}/approve")
+async def approve_document(doc_id: str, _: Dict = Depends(require_admin)):
+    ok = set_document_approved(doc_id, True)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return {"ok": True, "doc_id": doc_id, "approved": True}
+
+
+@router.patch("/documents/{doc_id}/unapprove")
+async def unapprove_document(doc_id: str, _: Dict = Depends(require_admin)):
+    ok = set_document_approved(doc_id, False)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return {"ok": True, "doc_id": doc_id, "approved": False}
+
+
 @router.delete("/documents/{doc_id}")
 async def delete_document(doc_id: str, _: Dict = Depends(require_admin)):
-    # Remove from metadata; Qdrant cleanup is skipped for brevity (can implement payload filter delete)
+    # Delete embeddings from Qdrant and remove metadata
+    store = QdrantStore()
+    try:
+        store.delete_by_doc_id(doc_id)
+    except Exception as e:
+        # Continue even if vector deletion fails; surface the error in response
+        vec_err = str(e)
+    else:
+        vec_err = None
     deleted = meta_delete(doc_id)
-    return {"ok": deleted, "deleted": doc_id}
+    return {"ok": deleted, "deleted": doc_id, "vectors_error": vec_err}

@@ -1,0 +1,35 @@
+{
+  "date": "2025-11-04",
+  "items": [
+    {
+      "field": "contract",
+      "title": "Consideration Need Not Be Adequate",
+      "content": "Consideration Need Not Be Adequate:\n\nUnder Indian Contract Law, valid consideration is essential for a contract to be enforceable (Section 10, Indian Contract Act, 1872). However, the adequacy of the consideration is not a requirement (Section 25, Explanation 2). This means a court won't invalidate an agreement simply because the agreed-upon price or value seems disproportionate, as long as the parties freely consented. The focus is on whether consideration exists, not whether it's a \"fair\" deal.\n\nFor example, selling a valuable item for a very low price is still a valid contract if both parties agreed without coercion or fraud. The court might, however, consider inadequacy of consideration as evidence of undue influence or fraud. (See: Chinnaya vs. Venkataramaya, (1881) ILR 4 Mad 137)."
+    },
+    {
+      "field": "criminal",
+      "title": "Cognizable vs. Non-Cognizable Offences",
+      "content": "Cognizable vs. Non-Cognizable Offences:\nIndian criminal law categorizes offences primarily into cognizable and non-cognizable. A cognizable offence is one where a police officer can arrest without a warrant (e.g., murder, theft). They can initiate an investigation immediately. In contrast, a non-cognizable offence requires a warrant for arrest (e.g., cheating, forgery). The police need a court order to start investigating.\n\nSection 2(c) of the Criminal Procedure Code (CrPC), 1973 defines \"cognizable offence,\" while Section 2(l) defines \"non-cognizable offence.\" The First Schedule of the CrPC further classifies offences under the Indian Penal Code (IPC) as either cognizable or non-cognizable."
+    },
+    {
+      "field": "family",
+      "title": "Guardianship Rights of Mothers",
+      "content": "Guardianship Rights of Mothers:\nUnder Indian law, both parents are considered natural guardians of a child. However, the father is typically considered the primary guardian, especially for property matters. The mother's guardianship rights are recognized, particularly for children under five years old, where she usually has custody. After the father, the mother is the natural guardian. The Hindu Minority and Guardianship Act, 1956 governs guardianship among Hindus.\n\nFor more information, refer to the Hindu Minority and Guardianship Act, 1956 (available on websites like India Code) and relevant court judgments interpreting these provisions."
+    },
+    {
+      "field": "ip",
+      "title": "India's 'Well-Known Trademark' Status",
+      "content": "India's 'Well-Known Trademark' Status:\nIn India, a trademark can be declared a 'well-known trademark' by the Trademark Registry. This status provides broader protection, preventing others from using similar marks even for dissimilar goods/services if it could cause confusion or dilute the brand's distinctiveness. Factors considered include the extent of the mark's recognition among the public, duration and geographical area of use, and successful enforcement actions.\n\nSection 11 of the Trademarks Act, 1999, deals with relative grounds for refusal of registration, including protection for well-known trademarks. The Trademark Rules, 2017, also outline the procedure for determining well-known trademarks. (See: https://ipindia.gov.in/)"
+    },
+    {
+      "field": "tax",
+      "title": "GST E-Invoicing: Simplified",
+      "content": "GST E-Invoicing: Simplified:\n\nE-invoicing under GST mandates that specified categories of taxpayers (based on turnover) must authenticate invoices electronically on the government's Invoice Registration Portal (IRP) before issuance. This promotes transparency, reduces fraud, and improves tax compliance. The IRP generates a unique Invoice Reference Number (IRN) and digitally signs the invoice.\n\nE-invoicing applies to Business-to-Business (B2B) transactions, exports, and certain other supplies. Check the latest turnover thresholds and applicable notifications on the GST portal (e.g., https://www.gst.gov.in/) and the e-invoice system portal (https://einvoice1.gst.gov.in/)."
+    },
+    {
+      "field": "property",
+      "title": "Property Mutation in India",
+      "content": "Property Mutation in India:\n\nProperty mutation is the process of recording the transfer of ownership of a property in government records. It doesn't confer ownership, but it's crucial for tax assessment and preventing disputes. Mutation is typically done at the local municipal office or land revenue department.\n\nWithout mutation, the previous owner remains liable for property taxes, and the new owner may face difficulties in selling or transferring the property later. The process involves submitting an application with relevant documents like sale deed, identity proof, and tax receipts.\n\nSource: Department of Land Resources, Ministry of Rural Development\nSource: Respective State Land Revenue Codes"
+    }
+  ]
+}

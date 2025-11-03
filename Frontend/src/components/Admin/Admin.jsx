@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Nav from "../Navbar/Nav";
 import SideBar from "../Sidebar/SideBar";
-import { login, listDocuments, setToken, uploadDocumentWithProgress, pingHealth } from "../../lib/api";
+import { login, listDocuments, setToken, uploadDocumentWithProgress, pingHealth, approveDocument, deleteDocument as apiDeleteDocument } from "../../lib/api";
 
 export default function Admin() {
   const [email, setEmail] = useState("");
@@ -49,6 +49,27 @@ export default function Admin() {
       setDocs(res.items || []);
     } catch (e) {
       console.error(e);
+    }
+  }
+
+  async function handleApprove(docId) {
+    try {
+      await approveDocument(docId);
+      await refreshDocs();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to approve document");
+    }
+  }
+
+  async function handleDelete(docId) {
+    if (!confirm("Delete embeddings and remove this document from the index?")) return;
+    try {
+      await apiDeleteDocument(docId);
+      await refreshDocs();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to delete document");
     }
   }
 
@@ -150,9 +171,27 @@ export default function Admin() {
                 </div>
                 <ul className="space-y-2">
                   {docs.map((d)=> (
-                    <li key={d.doc_id} className="border border-[#EEF6FB] bg-[#F9FCFF] rounded px-3 py-2 text-sm">
-                      <div className="font-medium text-[#0A2B42]">{d.title}</div>
-                      <div className="text-[#99BACE]">doc_id: {d.doc_id} • chunks: {d.chunks}</div>
+                    <li key={d.doc_id} className="border border-[#EEF6FB] bg-[#F9FCFF] rounded px-3 py-2 text-sm flex items-center justify-between gap-3">
+                      <div>
+                        <div className="font-medium text-[#0A2B42]">{d.title || d.path || d.doc_id}</div>
+                        <div className="text-[#99BACE]">doc_id: {d.doc_id} • chunks: {d.chunks} {typeof d.approved !== 'undefined' && (d.approved ? '• approved' : '• not approved')}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          title={d.approved ? "Approved" : "Approve"}
+                          onClick={()=>handleApprove(d.doc_id)}
+                          className={`w-8 h-8 rounded-full border flex items-center justify-center ${d.approved ? 'bg-green-500 text-white border-green-600' : 'bg-white text-[#2C6BA1] border-[#2C6BA1] hover:bg-[#F1F7FB]'}`}
+                        >
+                          ✓
+                        </button>
+                        <button
+                          title="Delete embeddings"
+                          onClick={()=>handleDelete(d.doc_id)}
+                          className="w-8 h-8 rounded-full border border-red-300 text-red-600 bg-white hover:bg-red-50 flex items-center justify-center"
+                        >
+                          🗑
+                        </button>
+                      </div>
                     </li>
                   ))}
                   {docs.length===0 && <div className="text-sm text-[#99BACE]">No documents yet.</div>}

@@ -22,5 +22,49 @@
     "updated_at": 1762168766.5208964,
     "eta_seconds": null,
     "message": "Unexpected Response: 400 (Bad Request)\nRaw response content:\nb'{\"status\":{\"error\":\"Format error in JSON body: value 34b18721-b681-48e1-b8ff-83639a1c607b_0 is not a valid point ID, valid values are either an unsigned integer or a UUID\"},\"time\":0.0}'"
+  },
+  "a97bac3a-9b49-4808-968f-0daba2536cb8": {
+    "status": "ready",
+    "stage": "done",
+    "title": "250883_english_01042024.pdf",
+    "total_chunks": 356,
+    "ingested": 356,
+    "percent": 100,
+    "started_at": 1762202946.7489703,
+    "updated_at": 1762203225.8783953,
+    "eta_seconds": 0
+  },
+  "30e0c693-fb8e-4adb-aa02-6cd8ca95cb7e": {
+    "status": "ready",
+    "stage": "done",
+    "title": "mock_fir_constitution_itact.pdf",
+    "total_chunks": 5,
+    "ingested": 5,
+    "percent": 100,
+    "started_at": 1762203382.1035883,
+    "updated_at": 1762203384.6386867,
+    "eta_seconds": 0
+  },
+  "162f1628-ff89-4306-839f-4bdee0df68ee": {
+    "status": "ready",
+    "stage": "done",
+    "title": "mock_fir_constitution_itact.pdf",
+    "total_chunks": 5,
+    "ingested": 5,
+    "percent": 100,
+    "started_at": 1762203625.968459,
+    "updated_at": 1762203628.319116,
+    "eta_seconds": 0
+  },
+  "d2d76e6a-6049-4c6b-904f-45ebd08709ba": {
+    "status": "ready",
+    "stage": "done",
+    "title": "mock_fir_constitution_itact.pdf",
+    "total_chunks": 5,
+    "ingested": 5,
+    "percent": 100,
+    "started_at": 1762203909.6317422,
+    "updated_at": 1762203918.4043853,
+    "eta_seconds": 0
   }
 }

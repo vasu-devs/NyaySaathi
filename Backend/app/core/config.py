@@ -8,8 +8,11 @@ class Settings(BaseSettings):
     cors_origins: List[str] = ["http://localhost:5173"]
 
     # LLM provider
-    llm_provider: str = Field("openai", description="openai|google")
-    llm_model: str = Field("gpt-4o-mini")
+    llm_provider: str = Field("google", description="openai|google")
+    # Prefer v1 model id form for Gemini 2.0 Flash
+    llm_model: str = Field("models/gemini-2.0-flash")
+    llm_max_output_tokens: int = Field(6144, description="Maximum tokens to generate in responses")
+    enable_markdown_rendering: bool = Field(False, description="Toggle Markdown rendering vs plain text sanitization")
     openai_api_key: str | None = None
     google_api_key: str | None = None
 

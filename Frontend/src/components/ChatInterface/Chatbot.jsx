@@ -1,17 +1,23 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import SideBar from "../Sidebar/SideBar";
 import Nav from "../Navbar/Nav";
-import { streamChat } from "../../lib/api";
+import { streamChat, askOnce, debugRetrieve, pingHealth, getClientConfig } from "../../lib/api";
+import AnswerRenderer from "./components/AnswerRenderer";
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [hasStarted, setHasStarted] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [sources, setSources] = useState(null);
+  const [health, setHealth] = useState({ status: "unknown" });
+  const [clientCfg, setClientCfg] = useState({ markdown: false });
   const stopRef = useRef(null);
   const containerRef = useRef(null);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
+  const location = useLocation();
 
   useEffect(() => {
     if (hasStarted) {
@@ -28,7 +34,50 @@ const Chatbot = () => {
     }
   }, [input]);
 
-  function sendMessage(text) {
+  // Ping backend health once on mount (optional indicator)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const h = await pingHealth();
+        if (!cancelled) setHealth({ status: "ok", ...h });
+      } catch {
+        if (!cancelled) setHealth({ status: "error" });
+      }
+      // Fetch public client config (markdown toggle)
+      try {
+        const cfg = await getClientConfig();
+        if (!cancelled && cfg) setClientCfg(cfg);
+      } catch {
+        // ignore; default remains false
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Optional prefill from navigation state or URL query (?q=...), without auto-send
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get("q");
+    const st = (location && location.state && location.state.prefill) || null;
+    if (st && typeof st === "string" && st.trim()) {
+      setInput(st);
+      // Bring chat UI into focus to encourage sending
+      if (!hasStarted) setHasStarted(true);
+      // Focus the textarea for immediate editing/sending
+      setTimeout(() => textareaRef.current?.focus(), 0);
+      return;
+    }
+    if (q) {
+      setInput(q);
+      if (!hasStarted) setHasStarted(true);
+      setTimeout(() => textareaRef.current?.focus(), 0);
+    }
+  }, [location, hasStarted]);
+
+  const sendMessage = useCallback((text) => {
     const q = text.trim();
     if (!q || isStreaming) return;
 
@@ -43,12 +92,18 @@ const Chatbot = () => {
       textareaRef.current.style.height = "auto";
     }
 
-    // Start streaming from backend
+    // Fetch top contexts (for transparency and debug)
+    setSources(null);
+    debugRetrieve(q, 6).then((res) => setSources(res?.contexts || null)).catch(() => setSources(null));
+
+    // Start streaming from backend. If SSE fails or returns nothing, fall back to one-shot.
     let assistantId = Date.now() + 1;
     setIsStreaming(true);
+    let gotAnyToken = false;
     stopRef.current = streamChat(
       q,
       (token) => {
+        gotAnyToken = true;
         setMessages((m) => {
           if (m.length > 0 && m[m.length - 1].sender === "bot") {
             const copy = m.slice();
@@ -61,9 +116,29 @@ const Chatbot = () => {
           return [...m, { id: assistantId, sender: "bot", text: token }];
         });
       },
-      () => setIsStreaming(false)
+      async () => {
+        setIsStreaming(false);
+        // If SSE yielded nothing (CORS/proxy hiccup), try non-streaming fallback once
+        if (!gotAnyToken) {
+          try {
+            const ans = await askOnce(q);
+            setMessages((m) => {
+              if (m.length > 0 && m[m.length - 1].sender === "bot") {
+                const copy = m.slice();
+                copy[copy.length - 1] = { ...copy[copy.length - 1], text: ans };
+                return copy;
+              }
+              return [...m, { id: assistantId, sender: "bot", text: ans }];
+            });
+          } catch {
+            // Surface a helpful error instead of silent failure
+            const msg = "Unable to reach AI service. Check API_BASE and backend.";
+            setMessages((m) => [...m, { id: assistantId, sender: "bot", text: msg }]);
+          }
+        }
+      }
     );
-  }
+  }, [isStreaming, hasStarted]);
 
   function handleKeyDown(e) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -80,6 +155,13 @@ const Chatbot = () => {
       <main className="pt-16 pl-16 sm:pl-20 lg:pl-0">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-8">
           <div className="text-xs text-[#99BACE] mt-4">Home &gt; AI Saathi</div>
+
+          {/* Health indicator */}
+          {health.status !== "ok" && (
+            <div className="mt-3 text-xs text-[#b06565] bg-[#fde8e8] border border-[#f5c2c2] rounded px-3 py-2 inline-block">
+              Backend not ready or unreachable. Ensure API is running at http://localhost:8000.
+            </div>
+          )}
 
           {/* Welcome section - only visible before chat starts */}
           {!hasStarted && (
@@ -172,7 +254,11 @@ const Chatbot = () => {
                               : "bg-[#E7F3FB] text-[#0A2B42]"
                           }`}
                         >
-                          {m.text}
+                          {m.sender === "bot" ? (
+                            <AnswerRenderer text={m.text} markdown={!!clientCfg?.markdown} />
+                          ) : (
+                            m.text
+                          )}
                         </div>
                       </div>
                     ))}
@@ -236,6 +322,19 @@ const Chatbot = () => {
               </div>
             </>
           )}
+                    {/* Sources (debug/transparent) */}
+                    {sources && sources.filter((s) => (s.score ?? 0) >= 0.35).length > 0 && (
+                      <div className="text-xs sm:text-sm text-[#2C6BA1] bg-[#F1F7FB] border border-[#E6EEF6] rounded p-3">
+                        <div className="font-medium mb-1">Top sources used:</div>
+                        <ul className="list-disc pl-5 space-y-1">
+                          {sources.filter((s) => (s.score ?? 0) >= 0.35).slice(0, 3).map((s, idx) => (
+                            <li key={idx}>
+                              [{s.doc_id}:{s.chunk_id}] {s.text?.slice(0, 160)}{s.text && s.text.length > 160 ? "…" : ""}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
         </div>
       </main>
     </div>

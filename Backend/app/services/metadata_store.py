@@ -25,6 +25,8 @@ def add_document(doc: Dict):
     data = _load()
     # replace if same doc_id
     data['documents'] = [d for d in data['documents'] if d.get('doc_id') != doc.get('doc_id')]
+    if 'approved' not in doc:
+        doc['approved'] = False
     data['documents'].append(doc)
     _save(data)
 
@@ -39,3 +41,17 @@ def delete_document(doc_id: str) -> bool:
     data['documents'] = [d for d in data['documents'] if d.get('doc_id') != doc_id]
     _save(data)
     return len(data['documents']) < before
+
+def set_document_approved(doc_id: str, approved: bool) -> bool:
+    data = _load()
+    changed = False
+    docs = data.get('documents', [])
+    for d in docs:
+        if d.get('doc_id') == doc_id:
+            if d.get('approved') != approved:
+                d['approved'] = approved
+                changed = True
+            break
+    if changed:
+        _save(data)
+    return changed
