@@ -37,6 +37,12 @@ def live():
     return {"ok": True}
 
 
+# Compatibility alias so clients probing "/api/health" see a 200 OK
+@app.get(f"{settings.api_prefix}/health")
+def api_health():
+    return {"ok": True}
+
+
 @app.on_event("startup")
 def warmup_daily_nyayshala():
     """Warm the daily NyayShala cache in the background to keep first loads instant."""

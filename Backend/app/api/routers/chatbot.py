@@ -41,9 +41,23 @@ def debug_retrieve(query: str = Query(..., min_length=1), top_k: int = Query(6, 
 
 
 @router.get("/ask")
-def ask_chat_get(query: str = Query(..., min_length=1)):
+def ask_chat_get(
+    query: str | None = Query(None, min_length=1),
+    q: str | None = Query(None, min_length=1, description="Compatibility alias for 'query'")
+):
+    # Accept both 'query' and legacy 'q' as input; prefer 'query' when both provided
+    final_query = query or q
+    if not final_query:
+        # Mirror prior behavior: avoid raising; provide safe guidance instead
+        return {
+            "answer": (
+                "Please provide a non-empty 'query' parameter. For legal references, see:\n"
+                "- India Code: https://www.indiacode.nic.in/\n"
+                "- Legislative Department: https://legislative.gov.in"
+            )
+        }
     try:
-        text = answer(query, stream=False)
+        text = answer(final_query, stream=False)
     except Exception:
         text = (
             "Sorry, I can't complete this right now. Please refer to official Government of India legal resources:\n"
