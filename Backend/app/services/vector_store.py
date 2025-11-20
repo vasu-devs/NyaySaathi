@@ -1,15 +1,32 @@
 from __future__ import annotations
 from typing import List, Dict, Optional, Callable, TypeVar
 import time
+import os
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qmodels
 from app.core.config import settings
 
+# Singleton client instance to avoid locking issues with local storage
+_client_instance: Optional[QdrantClient] = None
+
+def get_qdrant_client() -> QdrantClient:
+    global _client_instance
+    if _client_instance is not None:
+        return _client_instance
+
+    if settings.qdrant_url:
+        _client_instance = QdrantClient(url=settings.qdrant_url, timeout=20.0)
+    else:
+        # Ensure local directory exists
+        os.makedirs(settings.qdrant_path, exist_ok=True)
+        _client_instance = QdrantClient(path=settings.qdrant_path)
+    
+    return _client_instance
+
 
 class QdrantStore:
     def __init__(self, collection: Optional[str] = None):
-        # Slightly longer timeout to avoid transient refused connections during container startup
-        self.client = QdrantClient(url=settings.qdrant_url, timeout=20.0)
+        self.client = get_qdrant_client()
         self.collection = collection or settings.qdrant_corpus_collection
 
     def _with_retries(self, fn: Callable, *args, **kwargs):
@@ -57,14 +74,17 @@ class QdrantStore:
         )
 
     def search(self, vector: List[float], top_k: int = 6, filter_: Optional[qmodels.Filter] = None) -> List[Dict]:
+        # Use query_points instead of search for newer qdrant-client versions
+        # query_points returns a QueryResponse object, we need to access .points
         res = self._with_retries(
-            self.client.search,
+            self.client.query_points,
             collection_name=self.collection,
-            query_vector=vector,
+            query=vector,
             limit=top_k,
             query_filter=filter_,
             with_payload=True,
-        )
+        ).points
+        
         out: List[Dict] = []
         for p in res:
             payload = p.payload or {}

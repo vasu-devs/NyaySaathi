@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, BackgroundTasks
 from typing import List, Dict
 from app.services.doc_ingestion import save_upload, ingest_file
 from app.services.metadata_store import add_document, list_documents as meta_list, delete_document as meta_delete, set_document_approved
@@ -12,39 +12,56 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 @router.post("/documents")
 async def upload_document(
+    tasks: BackgroundTasks,
     file: UploadFile = File(...),
     title: str | None = Form(None),
     _: Dict = Depends(require_admin),
 ):
+    print(f"Received upload request: {file.filename}")
     if not file.filename:
         raise HTTPException(status_code=400, detail="Missing filename")
     content = await file.read()
+    print(f"Read {len(content)} bytes")
     saved = save_upload(content, file.filename)
-    try:
-        info = ingest_file(saved, title=title)
-        info["approved"] = False
-        add_document(info)
-        return {"ok": True, "document": info}
-    except Exception as e:
-        # Best-effort recovery for vector dimension mismatch by recreating the corpus collection
-        msg = str(e)
+
+    import uuid
+    doc_id = str(uuid.uuid4())
+    
+    # Add initial "processing" metadata so it shows up immediately
+    initial_info = {
+        "doc_id": doc_id,
+        "title": title or file.filename,
+        "path": saved,
+        "approved": False,
+        "status": "processing",
+        "chunks": 0
+    }
+    add_document(initial_info)
+
+    def _bg():
+        print(f"[BG TASK] Starting ingestion for doc_id={doc_id}, file={saved}")
         try:
-            if any(x in msg.lower() for x in ["dimension", "vector", "mismatch", "expected"]):
-                dim = get_embedder().get_sentence_embedding_dimension()
-                store = QdrantStore()  # default corpus collection
-                # Import models lazily to avoid import resolution issues during linting
-                from qdrant_client.http import models as qmodels
-                store.client.recreate_collection(
-                    collection_name=store.collection,
-                    vectors_config=qmodels.VectorParams(size=dim, distance=qmodels.Distance.COSINE),
-                )
-                info = ingest_file(saved, title=title)  # retry
-                info["approved"] = False
-                add_document(info)
-                return {"ok": True, "document": info, "recovered": True}
-        except Exception:
-            pass
-        raise HTTPException(status_code=500, detail=f"Ingestion failed: {msg}")
+            # Pass doc_id to reuse it
+            print(f"[BG TASK] Calling ingest_file...")
+            info = ingest_file(saved, title=title, doc_id=doc_id)
+            print(f"[BG TASK] Ingestion complete. Chunks: {info.get('chunks', 0)}")
+            info["approved"] = False
+            info["status"] = "ready"
+            print(f"[BG TASK] Updating metadata...")
+            add_document(info)
+            print(f"[BG TASK] Metadata updated successfully")
+        except Exception as e:
+            print(f"[BG TASK] Ingestion failed: {e}")
+            import traceback
+            traceback.print_exc()
+            initial_info["status"] = "error"
+            initial_info["error"] = str(e)
+            add_document(initial_info)
+
+    tasks.add_task(_bg)
+    
+    return {"ok": True, "message": "Ingestion started in background", "doc_id": doc_id}
+
 
 
 # Minimal stubs for list/get/delete (metadata persistence will be added later)

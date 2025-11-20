@@ -1,20 +1,13 @@
 {
   "documents": [
     {
-      "doc_id": "2744c3a5-892a-415c-b248-a210953009f6",
-      "title": "it_act_2000_updated.pdf",
-      "chunks": 138,
-      "checksum": "e71725fa32e892f887308816046c42275fc855b5cbb4ee1063cdbd518f165140",
-      "path": ".data/uploads\\it_act_2000_updated_9.pdf",
-      "approved": true
-    },
-    {
-      "doc_id": "8893239e-6337-4389-a845-5d2cd8756394",
+      "doc_id": "7704ab91-af34-4f5a-b064-72fdd6461976",
       "title": "250883_english_01042024.pdf",
       "chunks": 356,
       "checksum": "c9da896e7a16c481a46235789f74f545b7a9ed7f3a5c8049d0b1b9252c6731f4",
-      "path": ".data/uploads\\250883_english_01042024_3.pdf",
-      "approved": true
+      "path": ".data/uploads\\250883_english_01042024_12.pdf",
+      "approved": true,
+      "status": "ready"
     }
   ]
 }

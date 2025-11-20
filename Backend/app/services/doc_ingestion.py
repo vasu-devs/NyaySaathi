@@ -83,6 +83,7 @@ def ingest_file(
     if progress_cb:
         progress_cb({"stage": "extract"})
     text = extract_text(saved_path)
+    print(f"[INGEST] Extracted text length: {len(text)}")
 
     # Prefer legal-aware splitting with enriched metadata
     chunks_with_meta: List[Tuple[str, Dict]] = []
@@ -99,16 +100,19 @@ def ingest_file(
 
     if chunks_with_meta:
         chunks = [c for c, _ in chunks_with_meta]
+        print(f"[INGEST] Using legal-aware chunking: {len(chunks)} chunks")
     else:
         # Fallback: preprocess full text then simple split
         clean_full = preprocess_legal_text(text)
         chunks = split_text(clean_full)
+        print(f"[INGEST] Using fallback chunking: {len(chunks)} chunks")
         # create placeholder meta
         chunks_with_meta = [(c, {"unit_type": "Prose"}) for c in chunks]
 
     total_chunks = len(chunks_with_meta)
+    print(f"[INGEST] Total chunks after splitting: {total_chunks}")
     if progress_cb:
-        progress_cb({"stage": "split", "total_chunks": total_chunks, "ingested": 0, "percent": 0})
+        progress_cb({" stage": "split", "total_chunks": total_chunks, "ingested": 0, "percent": 0})
 
     # Prepare embedding and collection
     embedder = get_embedder()

@@ -99,5 +99,40 @@
     "started_at": 1762243090.9366565,
     "updated_at": 1762243093.9610062,
     "eta_seconds": 0
+  },
+  "5a752d0d-705c-4391-b514-e0f092d09fcf": {
+    "status": "ready",
+    "stage": "done",
+    "title": "mock_fir_legal_lens.pdf",
+    "total_chunks": 5,
+    "ingested": 5,
+    "percent": 100,
+    "started_at": 1763585039.2998745,
+    "updated_at": 1763585057.0624042,
+    "eta_seconds": 0
+  },
+  "320d5c38-82fd-4f60-964f-27a758b01573": {
+    "status": "ready",
+    "stage": "done",
+    "title": "mock_fir_legal_lens.pdf",
+    "total_chunks": 5,
+    "ingested": 5,
+    "percent": 100,
+    "started_at": 1763652699.2675915,
+    "updated_at": 1763652700.4542189,
+    " stage": "split",
+    "eta_seconds": 0
+  },
+  "a7e663ad-ffcf-4a01-8003-d1ec709fb23a": {
+    "status": "ready",
+    "stage": "done",
+    "title": "mock_fir_legal_lens.pdf",
+    "total_chunks": 5,
+    "ingested": 5,
+    "percent": 100,
+    "started_at": 1763652753.4169183,
+    "updated_at": 1763652754.6002533,
+    " stage": "split",
+    "eta_seconds": 0
   }
 }

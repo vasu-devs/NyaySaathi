@@ -17,10 +17,12 @@ class Settings(BaseSettings):
     google_api_key: str | None = None
 
     # Stores
-    qdrant_url: str = "http://localhost:6333"
-    redis_url: str = "redis://localhost:6379/0"
+    qdrant_url: str | None = None
+    qdrant_path: str = ".qdrant_data"
+
     storage_dir: str = ".data/uploads"
     qdrant_corpus_collection: str = "corpus"
+    embed_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     # Auth
     jwt_secret: str = "change-me-dev-secret"
@@ -30,5 +32,6 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()
