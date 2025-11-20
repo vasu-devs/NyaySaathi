@@ -3,8 +3,6 @@
 > **Your AI-Powered Legal Companion for India**  
 > *Empowering citizens with verified legal information through RAG-based AI chat, curated learning, and document analysis.*
 
-![NyaySaathi Banner](https://via.placeholder.com/1200x300?text=NyaySaathi+AI+Legal+Assistant)
-
 ---
 
 ## 🚀 Overview
